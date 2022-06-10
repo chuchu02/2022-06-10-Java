@@ -7,7 +7,9 @@ public class Calc {
 
         String operatorCode = getOperatorCode(s);
 
-        if (operatorCode.equals("-")) {
+        if (operatorCode.equals("number")) {
+            return Integer.parseInt(s);
+        } else if (operatorCode.equals("-")) {
             return minus(s);
         } else if (operatorCode.equals("*")) {
             return multi(s);
@@ -16,16 +18,60 @@ public class Calc {
         } else if (operatorCode.equals("/")) {
             return plus(s);
         }
-        return 0;
+
+        int splitIndex = 0;
+        boolean isPlus = true;
+        for(int i =0; i < s.length(); i++) {
+            if(s.charAt(i) == '+' || s.charAt(i) == '-') {
+                splitIndex = i;
+                if(s.charAt(i) == '-') {
+                    isPlus = false;
+                }
+                break;
+            }
+        }
+
+        String head = s.substring(0, splitIndex).trim();
+        String tail = s.substring(splitIndex + 1, s.length()).trim();
+
+        if (isPlus) {
+            return run(head) + run(tail);
+        }
+            return run(head) - run(tail);
+
     }
 
     private String getOperatorCode(String s) {
-        if(s.indexOf('-') != -1) return "-";
-        if(s.indexOf('+') != -1) return "+";
-        if(s.indexOf('*') != -1) return "*";
-        if(s.indexOf('/') != -1) return "/";
+        try {
+            Integer.parseInt(s);
 
-        return "unknown";
+            return "number";
+        } catch (NumberFormatException e) {
+
+        }
+
+        int nonNumberOperatorCount = 0;
+
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) == '(' || s.charAt(i) == '+' || s.charAt(i) == '-' || s.charAt(i) == '*' ||
+                    s.charAt(i) == '/') {
+                nonNumberOperatorCount++;
+            }
+        }
+
+        if (nonNumberOperatorCount == 1) {
+            // 단순연산 : -
+            if (s.indexOf('-') != -1) return "-";
+            // 단순연산 : +
+            if (s.indexOf('+') != -1) return "+";
+            // 단순연산 : *
+            if (s.indexOf('*') != -1) return "*";
+            // 단순연산 : /
+            if (s.indexOf('/') != -1) return "/";
+        }
+
+
+        return "splitInTwo";
     }
 
     private String stripOuterBrackets(String s) {
