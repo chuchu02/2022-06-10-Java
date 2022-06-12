@@ -1,118 +1,116 @@
-package com.exam.exam1;
+package PP;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Stack;
 
 public class Calc {
 
-    public int run(String s) {
-        s = stripOuterBrackets(s);
+    public void run(String s) {
+        resultPrint(organize(s));
+    }
 
-        String operatorCode = getOperatorCode(s);
+    private String[] organize(String s) {
+        boolean isBracket = false;
 
-        if (operatorCode.equals("number")) {
-            return Integer.parseInt(s);
-        } else if (operatorCode.equals("-")) {
-            return minus(s);
-        } else if (operatorCode.equals("*")) {
-            return multi(s);
-        } else if (operatorCode.equals("/")) {
-            return devide(s);
-        } else if (operatorCode.equals("/")) {
-            return plus(s);
+        if(s.charAt(0) == '(') {
+            isBracket = true;
         }
 
-        int splitIndex = 0;
-        boolean isPlus = true;
-        for(int i =0; i < s.length(); i++) {
-            if(s.charAt(i) == '+' || s.charAt(i) == '-') {
-                splitIndex = i;
-                if(s.charAt(i) == '-') {
-                    isPlus = false;
+        s = s.replace("(", " ( ");
+        s = s.replace(")", " ) ");
+        s = s.replace("+", " + ");
+        s = s.replace("-", " - ");
+        s = s.replace("*", " * ");
+        s = s.replace("/", " / ");
+        s = s.replace("  ", " ");
+        String[] str = s.split(" ");
+
+        ArrayList<String> sb = new ArrayList<>();
+        Stack<String> stack = new Stack<>();
+
+        for(int i = 0; i < str.length; i++) {
+            String now = str[i];
+
+            switch (now) {
+                case "+":
+                case "-":
+                case "*":
+                case "/":
+                    while(!stack.isEmpty() && priority(stack.peek()) >= priority(now)) {
+                        sb.add(stack.pop());
+                    }
+                    stack.push(now);
+                    break;
+                case "(":
+                    stack.push(now);
+                    break;
+                case ")":
+                    stack.push(now);
+                    break;
+                default:
+                    sb.add(now);
+            }
+        }
+
+        while (!stack.isEmpty()) {
+            sb.add(stack.pop());
+        }
+
+        if(isBracket) {
+            sb.remove(0);
+        }
+
+        String[] result = new String[sb.size()];
+
+        for(int i =0; i < sb.size(); i++) {
+            result[i] = sb.get(i);
+        }
+        return result;
+    }
+
+    private int priority(String operator) {
+
+        if(operator.equals("(") || operator.equals(")")) {
+            return 0;
+        } else if (operator.equals("+") || operator.equals("-")) {
+            return 1;
+        } else if (operator.equals("*") || operator.equals("/")) {
+            return 2;
+        }
+        return -1;
+    }
+
+    private void resultPrint(String[] str) {
+
+        Stack<Integer> stack = new Stack<>();
+
+        for(String x : str) {
+            if(!x.equals("+") && !x.equals("-") && !x.equals("*") && !x.equals("/")) {
+                stack.push(Integer.parseInt(x));
+            } else {
+
+                int a = stack.pop();
+                int b = stack.pop();
+
+                switch (x) {
+                    case "+":
+                        stack.push(a+b);
+                        break;
+                    case "-":
+                        stack.push(a-b);
+                        break;
+                    case "*":
+                        stack.push(a*b);
+                        break;
+                    case "/":
+                        stack.push(a/b);
+                        break;
                 }
-                break;
             }
         }
-
-        String head = s.substring(0, splitIndex).trim();
-        String tail = s.substring(splitIndex + 1, s.length()).trim();
-
-        if (isPlus) {
-            return run(head) + run(tail);
-        }
-            return run(head) - run(tail);
-
-    }
-
-    private String getOperatorCode(String s) {
-        try {
-            Integer.parseInt(s);
-
-            return "number";
-        } catch (NumberFormatException e) {
-
-        }
-
-        int nonNumberOperatorCount = 0;
-
-        for (int i = 0; i < s.length(); i++) {
-            if (s.charAt(i) == '(' || s.charAt(i) == '+' || s.charAt(i) == '-' || s.charAt(i) == '*' ||
-                    s.charAt(i) == '/') {
-                nonNumberOperatorCount++;
-            }
-        }
-
-        if (nonNumberOperatorCount == 1) {
-            // 단순연산 : -
-            if (s.indexOf('-') != -1) return "-";
-            // 단순연산 : +
-            if (s.indexOf('+') != -1) return "+";
-            // 단순연산 : *
-            if (s.indexOf('*') != -1) return "*";
-            // 단순연산 : /
-            if (s.indexOf('/') != -1) return "/";
-        }
-
-
-        return "splitInTwo";
-    }
-
-    private String stripOuterBrackets(String s) {
-        while (s.charAt(0) == '(' && s.charAt(s.length() - 1) == ')') {
-            s = s.substring(1, s.length() - 1);
-        }
-        return s;
-    }
-
-    private int devide(String s) {
-        String[] sBits = s.split(" \\/ ");
-        int a = Integer.parseInt(sBits[0]);
-        int b = Integer.parseInt(sBits[1]);
-
-        return a / b;
-    }
-
-    private int multi(String s) {
-        String[] sBits = s.split(" \\* ");
-        int a = Integer.parseInt(sBits[0]);
-        int b = Integer.parseInt(sBits[1]);
-
-        return a * b;
-    }
-
-    public int plus(String s) {
-        String[] sBits = s.split(" \\+ ");
-        int a = Integer.parseInt(sBits[0]);
-        int b = Integer.parseInt(sBits[1]);
-
-        return a + b;
-    }
-
-    public int minus(String s) {
-        String[] sBits = s.split(" \\- ");
-        int a = Integer.parseInt(sBits[0]);
-        int b = Integer.parseInt(sBits[1]);
-
-        return a - b;
+        System.out.println(stack.pop());
     }
 
 
 }
-
