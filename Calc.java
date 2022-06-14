@@ -1,116 +1,173 @@
-package PP;
-
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Stack;
+package com.exam.exam1;
 
 public class Calc {
+    public int run(String s) {
 
-    public void run(String s) {
-        resultPrint(organize(s));
-    }
+        s = stripOuterBrackets(s);
 
-    private String[] organize(String s) {
-        boolean isBracket = false;
+        String operatorCode = getOperatorCode(s);
 
-        if(s.charAt(0) == '(') {
-            isBracket = true;
+        if (operatorCode.equals("number")) {
+            return Integer.parseInt(s);
+        } else if (operatorCode.equals("-")) {
+            return minus(s);
+        } else if (operatorCode.equals("*")) {
+            return multi(s);
+        } else if (operatorCode.equals("/")) {
+            return divide(s);
+        } else if (operatorCode.equals("+")) {
+            return plus(s);
         }
 
-        s = s.replace("(", " ( ");
-        s = s.replace(")", " ) ");
-        s = s.replace("+", " + ");
-        s = s.replace("-", " - ");
-        s = s.replace("*", " * ");
-        s = s.replace("/", " / ");
-        s = s.replace("  ", " ");
-        String[] str = s.split(" ");
+        // 더하기, 빼기로 나눌 수 있는지 체크
+        int splitIndex = -1;
+        int bracketCount = 0;
+        boolean isPlus = true;
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) == '(') {
+                bracketCount++;
+            } else if (s.charAt(i) == ')') {
+                bracketCount--;
+            } else if (s.charAt(i) == '+' || s.charAt(i) == '-') {
+                if (bracketCount > 0) {
+                    continue;
+                }
 
-        ArrayList<String> sb = new ArrayList<>();
-        Stack<String> stack = new Stack<>();
-
-        for(int i = 0; i < str.length; i++) {
-            String now = str[i];
-
-            switch (now) {
-                case "+":
-                case "-":
-                case "*":
-                case "/":
-                    while(!stack.isEmpty() && priority(stack.peek()) >= priority(now)) {
-                        sb.add(stack.pop());
-                    }
-                    stack.push(now);
-                    break;
-                case "(":
-                    stack.push(now);
-                    break;
-                case ")":
-                    stack.push(now);
-                    break;
-                default:
-                    sb.add(now);
+                if(s.charAt(i + 1) != ' ') {
+                    continue;
+                }
+                splitIndex = i;
+                if (s.charAt(i) == '-') {
+                    isPlus = false;
+                }
+                break;
             }
         }
 
-        while (!stack.isEmpty()) {
-            sb.add(stack.pop());
+        if (splitIndex != -1) {
+            String head = s.substring(0, splitIndex).trim();
+            String tail = s.substring(splitIndex + 1).trim();
+
+            if (isPlus) {
+                return run(head) + run(tail);
+            }
+
+            return run(head) - run(tail);
         }
 
-        if(isBracket) {
-            sb.remove(0);
+        splitIndex = -1;
+        bracketCount = 0;
+        boolean isMulti = true;
+
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) == '(') {
+                bracketCount++;
+            } else if (s.charAt(i) == ')') {
+                bracketCount--;
+            } else if (s.charAt(i) == '*' || s.charAt(i) == '/') {
+                if (bracketCount > 0) {
+                    continue;
+                }
+
+                splitIndex = i;
+                if (s.charAt(i) == '/') {
+                    isMulti = false;
+                }
+                break;
+            }
         }
 
-        String[] result = new String[sb.size()];
+        if (splitIndex != -1) {
+            String head = s.substring(0, splitIndex).trim();
+            String tail = s.substring(splitIndex + 1).trim();
 
-        for(int i =0; i < sb.size(); i++) {
-            result[i] = sb.get(i);
+            if (isMulti) {
+                return run(head) * run(tail);
+            }
+
+            return run(head) / run(tail);
         }
-        return result;
+
+        return 0;
     }
+        private String getOperatorCode(String s) {
+        try {
+            Integer.parseInt(s);
 
-    private int priority(String operator) {
+            return "number";
+        } catch (NumberFormatException e) {
 
-        if(operator.equals("(") || operator.equals(")")) {
-            return 0;
-        } else if (operator.equals("+") || operator.equals("-")) {
-            return 1;
-        } else if (operator.equals("*") || operator.equals("/")) {
-            return 2;
         }
-        return -1;
-    }
 
-    private void resultPrint(String[] str) {
+        int nonNumberOperatorCount = 0;
 
-        Stack<Integer> stack = new Stack<>();
-
-        for(String x : str) {
-            if(!x.equals("+") && !x.equals("-") && !x.equals("*") && !x.equals("/")) {
-                stack.push(Integer.parseInt(x));
-            } else {
-
-                int a = stack.pop();
-                int b = stack.pop();
-
-                switch (x) {
-                    case "+":
-                        stack.push(a+b);
-                        break;
-                    case "-":
-                        stack.push(a-b);
-                        break;
-                    case "*":
-                        stack.push(a*b);
-                        break;
-                    case "/":
-                        stack.push(a/b);
-                        break;
+        for (int i = 0; i < s.length(); i++) {
+            if(s.charAt(i) == '(') {
+                nonNumberOperatorCount++;
+            } else if (s.charAt(i) == '+' || s.charAt(i) == '-' || s.charAt(i) == '*' || s.charAt(i) == '/') {
+                if (s.charAt(i + 1) == ' '){
+                    nonNumberOperatorCount++;
                 }
             }
         }
-        System.out.println(stack.pop());
+
+        if (nonNumberOperatorCount == 1) {
+            // 단순연산 : -
+            if (s.indexOf(" - ") != -1) return "-";
+            // 단순연산 : +
+            if (s.indexOf(" + ") != -1) return "+";
+            // 단순연산 : *
+            if (s.indexOf(" * ") != -1) return "*";
+            // 단순연산 : /
+            if (s.indexOf(" / ") != -1) return "/";
+        }
+
+        return "splitInTwo";
     }
 
+    private String stripOuterBrackets(String s) {
+        s = s.trim();
 
+        if ( s.length() == 0 ) {
+            return s;
+        }
+
+        while (s.charAt(0) == '(' && s.charAt(s.length() - 1) == ')') {
+            s = s.substring(1, s.length() - 1);
+        }
+
+        return s;
+    }
+
+    private int divide(String s) {
+        String[] sBits = s.split(" \\/ ");
+        int a = Integer.parseInt(sBits[0]);
+        int b = Integer.parseInt(sBits[1]);
+
+        return a / b;
+    }
+
+    private int multi(String s) {
+        String[] sBits = s.split(" \\* ");
+        int a = Integer.parseInt(sBits[0]);
+        int b = Integer.parseInt(sBits[1]);
+
+        return a * b;
+    }
+
+    public int plus(String s) {
+        String[] sBits = s.split(" \\+ ");
+        int a = Integer.parseInt(sBits[0]);
+        int b = Integer.parseInt(sBits[1]);
+
+        return a + b;
+    }
+
+    public int minus(String s) {
+        String[] sBits = s.split(" \\- ");
+        int a = Integer.parseInt(sBits[0]);
+        int b = Integer.parseInt(sBits[1]);
+
+        return a - b;
+    }
 }
